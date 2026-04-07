@@ -1,57 +1,9 @@
-const Redis = require('ioredis');
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const { OuterRateLimit, InnerRateLimit } = require('../middleware/rateLimit');
+const db = require('../config/db');
 
-
-const client = new Redis("rediss://default:"+process.env.UPSTASH_REDIS_REST_TOKEN+"@valid-frog-74056.upstash.io:6379");
-
-
-async function OuterRateLimit(api) {
-
-  const count = await client.incr('ratelimit:'+api);
-  if(count===1){
-    await client.expire("ratelimit:"+api,60)
-  }
-  if(count>5){
-    return false;
-  }else{
-    return true;
-  }
-  
-}
-
-async function InnerRateLimit(api,path,limit) {
-
-  const count = await client.incr('ratelimit:'+api+":"+path);
-  if(count===1){
-    await client.expire("ratelimit:"+api+":"+path,60)
-  }
-  if(count>limit){
-    return false;
-  }else{
-    return true;
-  }
-  
-}
-
-
-const db=[
-  {apikey:"abc123",
-  routes:[
-      {path:"/",targetURL:"https://backend-ufna.onrender.com/",cache:true,rateLimit:3}
-  ]},
-   {apikey:"abc124",
-  routes:[
-      {path:"/posts",targetURL:"https://jsonplaceholder.typicode.com",cache:true,rateLimit:100}
-  ]},
-
-   {apikey:"abc125",
-  routes:[
-      {path:"/dummy",targetURL:"https://backend-ufna.onrender.com/",cache:true,rateLimit:100}
-  ]},
-
-]
 router.use(async (req, res) => {
   try {
     const apiKey = req.headers['x-api-key'];
