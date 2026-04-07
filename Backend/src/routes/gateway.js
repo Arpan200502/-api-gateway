@@ -2,6 +2,8 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const { OuterRateLimit, InnerRateLimit } = require('../middleware/rateLimit');
+const { getCache, setCache } = require('../middleware/cache');
+
 const db = require('../config/db');
 
 router.use(async (req, res) => {
@@ -38,6 +40,18 @@ router.use(async (req, res) => {
        return res.status(429).json({error:"Custom Devs Rate Limit Exceeded"});
     }
     
+
+    const key= "cache:"+apiKey+":"+Path;
+
+  if(redirectUrl.cache){
+    const checkCache = await getCache(key);
+    if(checkCache !== null){
+      return res.status(200).send(checkCache);
+    }
+   }
+    
+    
+
     const targetUrl = redirectUrl.targetURL+req.path;
 
     // Strip headers that break the forwarded request
@@ -50,9 +64,14 @@ router.use(async (req, res) => {
       data: req.method !== 'GET' ? req.body : undefined,
       params: req.query
     });
+    const data=response.data;
+    const ttl=redirectUrl.cacheTTL;
+    if(redirectUrl.cache){
+     await setCache(key, data, ttl);
+    }
+    res.status(response.status).send(data);
 
-    res.status(response.status).json(response.data);
-
+    
   } catch (error) {
     console.error('Gateway error:', error.response?.data || error.message);
     res.status(500).json({ 

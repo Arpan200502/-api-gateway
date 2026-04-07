@@ -4,8 +4,7 @@ const gatewayRoute = require('./routes/gateway');
 
 const app = express();
 
-app.use(express.json()); // for POST body
-
+app.use(express.json()); 
 
 
 app.use('/gateway', gatewayRoute);
