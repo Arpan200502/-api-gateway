@@ -4,9 +4,10 @@ const axios = require('axios');
 const router = express.Router();
 
 
-const client = new Redis("rediss://default:gQAAAAAAASFIAAIncDI5NDEwMGQ0M2M3MDk0NjllYjQyYTRlNTRkOTUxYzQyYXAyNzQwNTY@valid-frog-74056.upstash.io:6379");
+const client = new Redis("rediss://default:"+process.env.UPSTASH_REDIS_REST_TOKEN+"@valid-frog-74056.upstash.io:6379");
 
-async function rateLimit(api) {
+
+async function OuterRateLimit(api) {
 
   const count = await client.incr('ratelimit:'+api);
   if(count===1){
@@ -20,11 +21,25 @@ async function rateLimit(api) {
   
 }
 
+async function InnerRateLimit(api,path,limit) {
+
+  const count = await client.incr('ratelimit:'+api+":"+path);
+  if(count===1){
+    await client.expire("ratelimit:"+api+":"+path,60)
+  }
+  if(count>limit){
+    return false;
+  }else{
+    return true;
+  }
+  
+}
+
 
 const db=[
   {apikey:"abc123",
   routes:[
-      {path:"/",targetURL:"https://backend-ufna.onrender.com/",cache:true,rateLimit:100}
+      {path:"/",targetURL:"https://backend-ufna.onrender.com/",cache:true,rateLimit:3}
   ]},
    {apikey:"abc124",
   routes:[
@@ -58,9 +73,17 @@ router.use(async (req, res) => {
     }
 
 
-    const checkRateLimit= await rateLimit(apiKey);
-    if(!checkRateLimit){
-       return res.status(429).json({error:"Rate Limit Exceeded"});
+    const checkOuterRateLimit= await OuterRateLimit(apiKey);
+    if(!checkOuterRateLimit){
+       return res.status(429).json({error:"Gateway Rate Limit Exceeded"});
+    }
+
+    const Path=redirectUrl.path;
+    const PathLimit=redirectUrl.rateLimit;
+
+    const checkInnerRateLimit= await InnerRateLimit(apiKey,Path,PathLimit);
+    if(!checkInnerRateLimit){
+       return res.status(429).json({error:"Custom Devs Rate Limit Exceeded"});
     }
     
     const targetUrl = redirectUrl.targetURL+req.path;
