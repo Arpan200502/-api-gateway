@@ -3,6 +3,7 @@ const axios = require('axios');
 const router = express.Router();
 const { OuterRateLimit, InnerRateLimit } = require('../middleware/rateLimit');
 const { getCache, setCache } = require('../middleware/cache');
+const { getServer } = require('../utils/loadBalancer');
 
 const db = require('../config/db');
 
@@ -41,18 +42,23 @@ router.use(async (req, res) => {
     }
     
 
-    const key= "cache:"+apiKey+":"+Path;
+    const cacheKey= "cache:"+apiKey+":"+Path;
 
   if(redirectUrl.cache){
-    const checkCache = await getCache(key);
+    const checkCache = await getCache(cacheKey);
     if(checkCache !== null){
       return res.status(200).send(checkCache);
     }
    }
     
-    
+    const targets = devDetails.targets;
 
-    const targetUrl = redirectUrl.targetURL+req.path;
+    const lbKey = "lb:" + apiKey;
+
+    const selected = await getServer(targets, lbKey);
+
+    const targetUrl = selected + req.path;
+    
 
     // Strip headers that break the forwarded request
     const { host, 'content-length': cl, connection, ...cleanHeaders } = req.headers;
@@ -67,7 +73,7 @@ router.use(async (req, res) => {
     const data=response.data;
     const ttl=redirectUrl.cacheTTL;
     if(redirectUrl.cache){
-     await setCache(key, data, ttl);
+     await setCache(cacheKey, data, ttl);
     }
     res.status(response.status).send(data);
 

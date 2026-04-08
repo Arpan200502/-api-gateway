@@ -8,7 +8,7 @@ async function OuterRateLimit(api) {
   if(count===1){
     await client.expire("ratelimit:"+api,60)
   }
-  if(count>5){
+  if(count>50){
     return false;
   }else{
     return true;
