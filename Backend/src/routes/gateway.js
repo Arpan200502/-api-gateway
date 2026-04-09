@@ -55,7 +55,10 @@ router.use(async (req, res) => {
 
     const lbKey = "lb:" + apiKey;
 
-    const selected = await getServer(targets, lbKey);
+    const selected = await getServer(apiKey,targets, lbKey);
+    if(selected===null){
+      return res.status(503).json({ error: "All backends are down" }); // ✅
+    }
 
     const targetUrl = selected + req.path;
     
