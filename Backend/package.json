@@ -13,6 +13,8 @@
     "axios": "^1.14.0",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",
-    "ioredis": "^5.10.1"
+    "ioredis": "^5.10.1",
+    "kafkajs": "^2.2.4",
+    "mongoose": "^9.4.1"
   }
 }
