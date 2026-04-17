@@ -6,8 +6,8 @@ const { OuterRateLimit, InnerRateLimit } = require('../middleware/rateLimit');
 const { getCache, setCache } = require('../middleware/cache');
 const { getServer } = require('../utils/loadBalancer');
 const { publishLog } = require('../kafka/producer'); // ✅ added
+const ApiConfig = require('../models/ApiConfig');
 
-const db = require('../config/db');
 
 router.use(async (req, res) => {
   const start = Date.now(); // ✅ for response time
@@ -32,7 +32,7 @@ router.use(async (req, res) => {
       return res.status(400).json({ error: "not api key" });
     }
 
-    const devDetails = db.find(route => route.apikey === apiKey);
+    const devDetails = await ApiConfig.findOne({ apikey: apiKey });
 
     if (!devDetails) {
       await publishLog({

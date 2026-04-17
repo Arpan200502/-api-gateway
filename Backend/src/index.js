@@ -8,6 +8,8 @@ require('./kafka/consumer');
 const app = express();
 
 app.use(express.json()); 
+app.use('/dev', require('./routes/dev'));
+
 app.use('/logs', require('./routes/logs'));
 
 app.use('/gateway', gatewayRoute);
