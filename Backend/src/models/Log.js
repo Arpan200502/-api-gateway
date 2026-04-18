@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 
 const logSchema = new mongoose.Schema({
   apiKey: String,
+  userId: String,   // ✅ added
   path: String,
   method: String,
   status: Number,
-  backend: String,
   cache: String,
+  backend: String,
   responseTime: Number,
   ip: String,
   error: String,

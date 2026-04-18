@@ -5,16 +5,14 @@ const router = express.Router();
 const { OuterRateLimit, InnerRateLimit } = require('../middleware/rateLimit');
 const { getCache, setCache } = require('../middleware/cache');
 const { getServer } = require('../utils/loadBalancer');
-const { publishLog } = require('../kafka/producer'); // ✅ added
+const { publishLog } = require('../kafka/producer');
 const ApiConfig = require('../models/ApiConfig');
 
-
 router.use(async (req, res) => {
-  const start = Date.now(); // ✅ for response time
- const ip = req.socket.remoteAddress;
- console.log(ip);
+  const start = Date.now();
+  const ip = req.socket.remoteAddress;
 
-  let selected = null; // for logging
+  let selected = null;
   let cacheStatus = "MISS";
 
   try {
@@ -33,10 +31,12 @@ router.use(async (req, res) => {
     }
 
     const devDetails = await ApiConfig.findOne({ apikey: apiKey });
+    const userId = devDetails?.userId; // ✅ added
 
     if (!devDetails) {
       await publishLog({
         apiKey,
+        userId,
         path: req.path,
         method: req.method,
         status: 401,
@@ -52,6 +52,7 @@ router.use(async (req, res) => {
     if (!redirectUrl) {
       await publishLog({
         apiKey,
+        userId,
         path: req.path,
         method: req.method,
         status: 404,
@@ -66,6 +67,7 @@ router.use(async (req, res) => {
     if (!checkOuterRateLimit) {
       await publishLog({
         apiKey,
+        userId,
         path: req.path,
         method: req.method,
         status: 429,
@@ -83,6 +85,7 @@ router.use(async (req, res) => {
     if (!checkInnerRateLimit) {
       await publishLog({
         apiKey,
+        userId,
         path: req.path,
         method: req.method,
         status: 429,
@@ -102,6 +105,7 @@ router.use(async (req, res) => {
 
         await publishLog({
           apiKey,
+          userId,
           path: req.path,
           method: req.method,
           status: 200,
@@ -124,6 +128,7 @@ router.use(async (req, res) => {
     if (selected === null) {
       await publishLog({
         apiKey,
+        userId,
         path: req.path,
         method: req.method,
         status: 503,
@@ -160,6 +165,7 @@ router.use(async (req, res) => {
 
     await publishLog({
       apiKey,
+      userId,
       path: req.path,
       method: req.method,
       status: response.status,
@@ -176,6 +182,7 @@ router.use(async (req, res) => {
     const responseTime = Date.now() - start;
 
     await publishLog({
+      userId: null, // fallback
       path: req.path,
       method: req.method,
       status: 500,

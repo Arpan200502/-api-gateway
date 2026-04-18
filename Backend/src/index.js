@@ -3,16 +3,24 @@ const express = require('express');
 const gatewayRoute = require('./routes/gateway');
 const { healthChk } = require('./utils/healthCheck');
 const { connectProducer} = require('./kafka/producer');
-
+const authMiddleware = require('./middleware/auth');
 require('./kafka/consumer');
+
 const app = express();
-
 app.use(express.json()); 
-app.use('/dev', require('./routes/dev'));
 
-app.use('/logs', require('./routes/logs'));
+
+app.use('/auth', require('./routes/auth'));
+
+// protect dev routes
+app.use('/dev', authMiddleware, require('./routes/dev'));
+
+// protect logs
+app.use('/logs', authMiddleware, require('./routes/logs'));
 
 app.use('/gateway', gatewayRoute);
+
+
 
 const PORT = 3000;
 

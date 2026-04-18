@@ -9,6 +9,7 @@ const routeSchema = new mongoose.Schema({
 
 const apiConfigSchema = new mongoose.Schema({
   apikey: String,
+  userId: String,      // ✅ owner
   targets: [String],
   routes: [routeSchema]
 });

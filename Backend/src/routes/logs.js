@@ -1,23 +1,22 @@
-// routes/logs.js
 const express = require('express');
 const router = express.Router();
 const Log = require('../models/Log');
+const User = require('../models/User');
 
+
+// GET logs
 router.get('/', async (req, res) => {
-  const role = req.headers['x-role'];
-  const apiKey = req.headers['x-api-key'];
+  const userId = req.user.userId;   // ✅ from JWT
+
+  const user = await User.findById(userId);
+  const role = user.role;
 
   let filter = {};
 
-  // 🔐 Dev
+  // 🔐 Dev → only their logs
   if (role !== 'admin') {
-    if (!apiKey) {
-      return res.status(400).json({ error: "No API key" });
-    }
-    filter.apiKey = apiKey;
+    filter.userId = userId;
   }
-
-  // 👑 Admin → no filter (gets everything)
 
   const logs = await Log.find(filter)
     .sort({ timestamp: -1 })
@@ -25,18 +24,20 @@ router.get('/', async (req, res) => {
 
   res.json(logs);
 });
+
+
+// GET stats
 router.get('/stats', async (req, res) => {
-  const role = req.headers['x-role'];
-  const apiKey = req.headers['x-api-key'];
+  const userId = req.user.userId;   // ✅ from JWT
+
+  const user = await User.findById(userId);
+  const role = user.role;
 
   let filter = {};
 
-  // 🔐 Dev → only their data
+  // 🔐 Dev → only their logs
   if (role !== 'admin') {
-    if (!apiKey) {
-      return res.status(400).json({ error: "No API key" });
-    }
-    filter.apiKey = apiKey;
+    filter.userId = userId;
   }
 
   try {
@@ -68,4 +69,5 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({ error: "Stats error" });
   }
 });
+
 module.exports = router;
