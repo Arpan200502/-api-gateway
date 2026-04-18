@@ -5,10 +5,26 @@ const normalizeConfig = require('../utils/normalizeConfig');
 const ApiConfig = require('../models/ApiConfig');
 
 
+// LIST all configs for logged-in user
+router.get('/apis', async (req, res) => {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId" });
+  }
+
+  const configs = await ApiConfig.find({ userId })
+    .select({ apikey: 1, targets: 1, routes: 1, _id: 0 })
+    .sort({ _id: -1 });
+
+  res.json(configs);
+});
+
+
 // DELETE
-router.delete('/api', async (req, res) => {
-  const apiKey = req.headers['x-api-key'];
-  const userId = req.user.userId;
+router.delete('/api/:apikey', async (req, res) => {
+  const apiKey = (req.params.apikey || '').trim();
+  const userId = req.user?.userId;
 
   if (!apiKey || !userId) {
     return res.status(400).json({ error: "Missing API key or userId" });
@@ -28,9 +44,9 @@ router.delete('/api', async (req, res) => {
 
 
 // UPDATE
-router.put('/api', async (req, res) => {
-  const apiKey = req.headers['x-api-key'];
-  const userId = req.headers['x-user-id'];
+router.put('/api/:apikey', async (req, res) => {
+  const apiKey = (req.params.apikey || '').trim();
+  const userId = req.user?.userId;
 
   if (!apiKey || !userId) {
     return res.status(400).json({ error: "Missing API key or userId" });
@@ -57,9 +73,9 @@ router.put('/api', async (req, res) => {
 
 
 // GET
-router.get('/api', async (req, res) => {
-  const apiKey = req.headers['x-api-key'];
-  const userId = req.headers['x-user-id'];
+router.get('/api/:apikey', async (req, res) => {
+  const apiKey = (req.params.apikey || '').trim();
+  const userId = req.user?.userId;
 
   if (!apiKey || !userId) {
     return res.status(400).json({ error: "Missing API key or userId" });
@@ -80,7 +96,7 @@ router.get('/api', async (req, res) => {
 
 // CREATE
 router.post('/api', async (req, res) => {
-  const userId = req.headers['x-user-id'];
+  const userId = req.user?.userId;
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });

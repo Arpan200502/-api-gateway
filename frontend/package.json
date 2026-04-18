@@ -1,0 +1,13 @@
+{
+  "name": "api-gateway-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal frontend server for API gateway dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
