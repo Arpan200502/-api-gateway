@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
+const DIST_DIR = path.join(__dirname, "dist");
 
 const FRONTEND_PORT = process.env.PORT || 8080;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
@@ -51,10 +52,10 @@ async function proxyRequest(req, res) {
 
 app.all(["/auth/*", "/dev/*", "/logs", "/logs/*"], proxyRequest);
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(DIST_DIR));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(DIST_DIR, "index.html"));
 });
 
 app.listen(FRONTEND_PORT, () => {

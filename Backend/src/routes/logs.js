@@ -3,12 +3,20 @@ const router = express.Router();
 const Log = require('../models/Log');
 const User = require('../models/User');
 
+async function getRequester(req) {
+  const userId = req.user?.userId;
+  if (!userId) {
+    return null;
+  }
+  return User.findById(userId).select({ _id: 1, role: 1 });
+}
+
 
 // GET logs
 router.get('/', async (req, res) => {
   const userId = req.user.userId;   // ✅ from JWT
 
-  const user = await User.findById(userId);
+  const user = await getRequester(req);
   const role = user.role;
 
   let filter = {};
@@ -26,11 +34,34 @@ router.get('/', async (req, res) => {
 });
 
 
+// GET users directory (admin only)
+router.get('/users', async (req, res) => {
+  const requester = await getRequester(req);
+
+  if (!requester) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (requester.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+
+  const users = await User.find({})
+    .select({ _id: 1, email: 1 })
+    .sort({ email: 1 });
+
+  res.json(users.map((item) => ({
+    userId: String(item._id),
+    email: item.email || null
+  })));
+});
+
+
 // GET stats
 router.get('/stats', async (req, res) => {
   const userId = req.user.userId;   // ✅ from JWT
 
-  const user = await User.findById(userId);
+  const user = await getRequester(req);
   const role = user.role;
 
   let filter = {};

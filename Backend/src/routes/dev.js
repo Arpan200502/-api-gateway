@@ -3,6 +3,17 @@ const router = express.Router();
 
 const normalizeConfig = require('../utils/normalizeConfig');
 const ApiConfig = require('../models/ApiConfig');
+const User = require('../models/User');
+
+async function isAdminRequester(req) {
+  const requesterId = req.user?.userId;
+  if (!requesterId) {
+    return false;
+  }
+
+  const requester = await User.findById(requesterId).select({ role: 1 });
+  return requester?.role === 'admin';
+}
 
 
 // LIST all configs for logged-in user
@@ -20,6 +31,21 @@ router.get('/apis', async (req, res) => {
   res.json(configs);
 });
 
+// LIST all configs across users (admin only)
+router.get('/apis/all', async (req, res) => {
+  const isAdmin = await isAdminRequester(req);
+
+  if (!isAdmin) {
+    return res.status(403).json({ error: 'Admin only' });
+  }
+
+  const configs = await ApiConfig.find({})
+    .select({ apikey: 1, targets: 1, routes: 1, userId: 1, _id: 0 })
+    .sort({ _id: -1 });
+
+  res.json(configs);
+});
+
 
 // DELETE
 router.delete('/api/:apikey', async (req, res) => {
@@ -30,10 +56,14 @@ router.delete('/api/:apikey', async (req, res) => {
     return res.status(400).json({ error: "Missing API key or userId" });
   }
 
-  const result = await ApiConfig.findOneAndDelete({
-    apikey: apiKey,
-    userId: userId   // ✅ ownership check
-  });
+  const isAdmin = await isAdminRequester(req);
+
+  const result = await ApiConfig.findOneAndDelete(
+    isAdmin ? { apikey: apiKey } : {
+      apikey: apiKey,
+      userId: userId   // ✅ ownership check
+    }
+  );
 
   if (!result) {
     return res.status(404).json({ error: "API not found or not yours" });
@@ -52,10 +82,14 @@ router.put('/api/:apikey', async (req, res) => {
     return res.status(400).json({ error: "Missing API key or userId" });
   }
 
-  const existing = await ApiConfig.findOne({
-    apikey: apiKey,
-    userId: userId   // ✅ ownership check
-  });
+  const isAdmin = await isAdminRequester(req);
+
+  const existing = await ApiConfig.findOne(
+    isAdmin ? { apikey: apiKey } : {
+      apikey: apiKey,
+      userId: userId   // ✅ ownership check
+    }
+  );
 
   if (!existing) {
     return res.status(404).json({ error: "API not found or not yours" });
@@ -81,10 +115,14 @@ router.get('/api/:apikey', async (req, res) => {
     return res.status(400).json({ error: "Missing API key or userId" });
   }
 
-  const config = await ApiConfig.findOne({
-    apikey: apiKey,
-    userId: userId   // ✅ ownership check
-  });
+  const isAdmin = await isAdminRequester(req);
+
+  const config = await ApiConfig.findOne(
+    isAdmin ? { apikey: apiKey } : {
+      apikey: apiKey,
+      userId: userId   // ✅ ownership check
+    }
+  );
 
   if (!config) {
     return res.status(404).json({ error: "API not found or not yours" });
