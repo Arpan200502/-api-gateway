@@ -7,7 +7,7 @@ A custom-built API Gateway SaaS that sits between clients and developer backends
 Client Request → API Gateway (auth, rate limit, cache, load balance) → Developer Backend
 
 ## Features (Phased Build)
-
+    
 - [x] Phase 1 - Core Proxy (forward requests to backend)
 - [x] Phase 2 - Route Config (path-based routing)
 - [x] Phase 3 - API Key Authentication 
