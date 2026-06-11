@@ -1,7 +1,7 @@
 # API Gateway
 
 A custom-built API Gateway SaaS that sits between clients and developer backends, providing traffic control, security, and observability.
-
+  
 ## What it does
 
 Client Request → API Gateway (auth, rate limit, cache, load balance) → Developer Backend
