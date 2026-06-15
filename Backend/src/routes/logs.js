@@ -30,7 +30,18 @@ router.get('/', async (req, res) => {
     .sort({ timestamp: -1 })
     .limit(50);
 
-  res.json(logs);
+  const userIds = [...new Set(logs.map(l => l.userId).filter(Boolean))];
+  const users = userIds.length
+    ? await User.find({ _id: { $in: userIds } }).select({ _id: 1, email: 1 })
+    : [];
+  const emailMap = Object.fromEntries(users.map(u => [String(u._id), u.email]));
+
+  const enriched = logs.map(log => ({
+    ...log.toObject(),
+    email: emailMap[log.userId] || null
+  }));
+
+  res.json(enriched);
 });
 
 

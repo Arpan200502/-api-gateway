@@ -1,5 +1,5 @@
 const Redis = require('ioredis');
-const client = new Redis("rediss://default:"+process.env.UPSTASH_REDIS_REST_TOKEN+"@valid-frog-74056.upstash.io:6379");
+const client = new Redis("rediss://default:"+process.env.UPSTASH_REDIS_REST_TOKEN+"@moving-hagfish-118176.upstash.io:6379");
 
 async function getCache(key) {
 

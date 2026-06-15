@@ -17,6 +17,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4",
-    "mongoose": "^9.4.1"
+    "mongoose": "^9.4.1",
+    "resend": "^6.12.4"
   }
 }
