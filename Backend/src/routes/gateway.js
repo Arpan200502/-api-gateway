@@ -7,35 +7,6 @@ const { getCache, setCache } = require('../middleware/cache');
 const { getServer } = require('../utils/loadBalancer');
 const { publishLog } = require('../kafka/producer');
 const ApiConfig = require('../models/ApiConfig');
-const User = require('../models/User');
-const { sendRateLimitEmail } = require('../utils/emailService');
-
-const rateLimitEmailCooldown = new Map();
-const COOLDOWN_MS = 60 * 1000;
-
-async function notifyRateLimit(userId, path, limit) {
-  try {
-    const cooldownKey = `rl:${userId}:${path}`;
-    if (rateLimitEmailCooldown.has(cooldownKey)) return;
-    rateLimitEmailCooldown.set(cooldownKey, true);
-    setTimeout(() => rateLimitEmailCooldown.delete(cooldownKey), COOLDOWN_MS);
-
-    if (!userId) {
-      console.log('[RateLimit Email] No userId, skipping');
-      return;
-    }
-    const user = await User.findById(userId).select('email');
-    if (!user?.email) {
-      console.log('[RateLimit Email] No email found for userId:', userId);
-      return;
-    }
-    console.log('[RateLimit Email] Sending to', user.email, 'for route', path);
-    await sendRateLimitEmail(user.email, path, limit);
-    console.log('[RateLimit Email] Sent successfully');
-  } catch (err) {
-    console.error('[RateLimit Email] Failed:', err.message);
-  }
-}
 
 router.use(async (req, res) => {
   const start = Date.now();
@@ -105,8 +76,6 @@ router.use(async (req, res) => {
         timestamp: new Date()
       });
 
-      await notifyRateLimit(userId, req.path, 50);
-
       return res.status(429).json({ error: "Gateway Rate Limit Exceeded" });
     }
 
@@ -125,8 +94,6 @@ router.use(async (req, res) => {
         error: "Inner rate limit exceeded",
         timestamp: new Date()
       });
-
-      await notifyRateLimit(userId, Path, PathLimit);
 
       return res.status(429).json({ error: "Custom Devs Rate Limit Exceeded" });
     }
