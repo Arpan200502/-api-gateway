@@ -5,10 +5,10 @@ module.exports = defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/auth": "http://localhost:3000",
-      "/dev": "http://localhost:3000",
-      "/logs": "http://localhost:3000",
-      "/gateway": "http://localhost:3000",
+      "/auth": "https://api-gateway-p3le.onrender.com",
+      "/dev": "https://api-gateway-p3le.onrender.com",
+      "/logs": "https://api-gateway-p3le.onrender.com",
+      "/gateway": "https://api-gateway-p3le.onrender.com",
     },
   },
 });

@@ -5,7 +5,7 @@ const app = express();
 const DIST_DIR = path.join(__dirname, "dist");
 
 const FRONTEND_PORT = process.env.PORT || 8080;
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+const BACKEND_URL = process.env.BACKEND_URL || "https://api-gateway-p3le.onrender.com";
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
