@@ -1,9 +1,20 @@
 const { Kafka } = require('kafkajs');
 
-const kafka = new Kafka({
+const kafkaConfig = {
   clientId: 'api-gateway',
-  brokers: ['localhost:9092']
-});
+  brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
+};
+
+if (process.env.KAFKA_USERNAME) {
+  kafkaConfig.ssl = true;
+  kafkaConfig.sasl = {
+    mechanism: 'scram-sha-256',
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
+  };
+}
+
+const kafka = new Kafka(kafkaConfig);
 
 const producer = kafka.producer();
 

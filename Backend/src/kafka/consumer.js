@@ -4,10 +4,21 @@ const { Kafka } = require('kafkajs');
 const connectDB = require('../config/mongo');
 const Log = require('../models/Log');
 
-const kafka = new Kafka({
+const kafkaConfig = {
   clientId: 'log-consumer',
-  brokers: ['127.0.0.1:9092']
-});
+  brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
+};
+
+if (process.env.KAFKA_USERNAME) {
+  kafkaConfig.ssl = true;
+  kafkaConfig.sasl = {
+    mechanism: 'scram-sha-256',
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
+  };
+}
+
+const kafka = new Kafka(kafkaConfig);
 
 const consumer = kafka.consumer({ groupId: 'gateway-log-group' });
 
