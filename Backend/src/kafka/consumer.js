@@ -1,44 +1,29 @@
-require('dotenv').config({ path: '../.env' });
-
-const { Kafka } = require('kafkajs');
-const connectDB = require('../config/mongo');
+const { Router } = require('express');
+const { Receiver } = require('@upstash/qstash');
 const Log = require('../models/Log');
 
-const kafkaConfig = {
-  clientId: 'log-consumer',
-  brokers: [process.env.KAFKA_BROKER || '127.0.0.1:9092'],
-};
+const router = Router();
 
-if (process.env.KAFKA_USERNAME) {
-  kafkaConfig.ssl = true;
-  kafkaConfig.sasl = {
-    mechanism: 'scram-sha-256',
-    username: process.env.KAFKA_USERNAME,
-    password: process.env.KAFKA_PASSWORD,
-  };
-}
+const receiver = new Receiver({
+  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY,
+  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY,
+});
 
-const kafka = new Kafka(kafkaConfig);
+router.post('/ingest', async (req, res) => {
+  try {
+    const signature = req.headers['upstash-signature'];
+    await receiver.verify({
+      signature,
+      body: JSON.stringify(req.body),
+    });
 
-const consumer = kafka.consumer({ groupId: 'gateway-log-group' });
+    const log = req.body;
+    await Log.create(log);
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('Log ingest failed:', error);
+    res.status(500).json({ error: 'Failed to save log' });
+  }
+});
 
-async function startConsumer() {
-  await connectDB();
-
-  await consumer.connect();
-  console.log('Consumer connected');
-
-  await consumer.subscribe({ topic: 'gateway-logs', fromBeginning: false });
-
-  await consumer.run({
-    eachMessage: async ({ message }) => {
-      const log = JSON.parse(message.value.toString());
-
-      await Log.create(log);
-
-      console.log("Saved:", log.path);
-    },
-  });
-}
-
-startConsumer();
+module.exports = router;

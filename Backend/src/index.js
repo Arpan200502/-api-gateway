@@ -1,10 +1,11 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const gatewayRoute = require('./routes/gateway');
 const { healthChk } = require('./utils/healthCheck');
 const { connectProducer} = require('./kafka/producer');
 const authMiddleware = require('./middleware/auth');
-require('./kafka/consumer');
+const logIngestRoute = require('./kafka/consumer');
+const connectDB = require('./config/mongo');
 
 const app = express();
 app.use(express.json());
@@ -33,6 +34,8 @@ app.use('/auth', require('./routes/auth'));
 // protect dev routes
 app.use('/dev', authMiddleware, require('./routes/dev'));
 
+app.use('/logs', logIngestRoute);
+
 // protect logs
 app.use('/logs', authMiddleware, require('./routes/logs'));
 
@@ -44,8 +47,9 @@ const PORT = 3000;
 
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT}`);
+  await connectDB();
   await connectProducer();
-  console.log('KAFKA UP!!!');
+  console.log('QStash producer ready');
   await healthChk();
   console.log('Health checks done, ready to serve');
 });

@@ -12,11 +12,11 @@ services:
         sync: false
       - key: UPSTASH_REDIS_REST_TOKEN
         sync: false
-      - key: KAFKA_BROKER
+      - key: QSTASH_TOKEN
         sync: false
-      - key: KAFKA_USERNAME
+      - key: QSTASH_CURRENT_SIGNING_KEY
         sync: false
-      - key: KAFKA_PASSWORD
+      - key: QSTASH_NEXT_SIGNING_KEY
         sync: false
       - key: JWT_SECRET
         generateValue: true

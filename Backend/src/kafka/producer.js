@@ -1,40 +1,24 @@
-const { Kafka } = require('kafkajs');
+const { Client } = require('@upstash/qstash');
 
-const kafkaConfig = {
-  clientId: 'api-gateway',
-  brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
-};
-
-if (process.env.KAFKA_USERNAME) {
-  kafkaConfig.ssl = true;
-  kafkaConfig.sasl = {
-    mechanism: 'scram-sha-256',
-    username: process.env.KAFKA_USERNAME,
-    password: process.env.KAFKA_PASSWORD,
-  };
-}
-
-const kafka = new Kafka(kafkaConfig);
-
-const producer = kafka.producer();
+const client = new Client({
+  token: process.env.QSTASH_TOKEN,
+  baseUrl: process.env.QSTASH_URL,
+});
 
 async function connectProducer() {
-  await producer.connect();
-  console.log('Kafka producer connected');
+  console.log('QStash producer ready');
 }
+
 async function publishLog(logData) {
   try {
-    await producer.send({
-      topic: 'gateway-logs',
-      messages: [{ value: JSON.stringify(logData) }]
-      
+    await client.publishJSON({
+      url: `${process.env.BACKEND_URL}/logs/ingest`,
+      body: logData,
+      retries: 3,
     });
-    console.log("LOG FUNCTION CALLED");
   } catch (error) {
-    console.error("Kafka log failed:", error);
+    console.error('QStash publish failed:', error);
   }
-
 }
-
 
 module.exports = { connectProducer, publishLog };

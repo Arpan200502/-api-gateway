@@ -16,7 +16,7 @@
     "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
-    "kafkajs": "^2.2.4",
+    "@upstash/qstash": "^2.7.0",
     "mongoose": "^9.4.1"
   }
 }
