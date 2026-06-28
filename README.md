@@ -16,7 +16,7 @@ Configure once. Deploy everywhere. Observe everything.**
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](#)
 [![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)](#)
 
-</div>
+</div> 
 
 ---
 
